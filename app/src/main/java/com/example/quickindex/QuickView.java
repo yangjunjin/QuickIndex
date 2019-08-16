@@ -1,5 +1,7 @@
 package com.example.quickindex;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -10,6 +12,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.OvershootInterpolator;
 import android.widget.TextView;
 
 import com.example.quickindexdemo.R;
@@ -32,6 +35,7 @@ public class QuickView extends View {
     private TextView tvDialog;
     private Handler handler = new Handler();
     private List<Friend> mList = new ArrayList<>();
+    private boolean isTouch = false;//是否在触摸
 
     public QuickView(Context context) {
         this(context, null);
@@ -75,8 +79,10 @@ public class QuickView extends View {
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                break;
+//                isTouch = true;
+//                break;
             case MotionEvent.ACTION_MOVE:
+                isTouch = true;
                 int index = (int) (event.getY() / cellHeight);
                 if (currentIndex != index) {
                     if (index >= 0 && index < indexArr.length) {
@@ -90,6 +96,7 @@ public class QuickView extends View {
                 break;
             case MotionEvent.ACTION_UP:
                 currentIndex = -1;
+                isTouch = false;
                 break;
         }
         invalidate();
@@ -112,18 +119,59 @@ public class QuickView extends View {
      *
      * @param text
      */
+    private boolean isAnimaing = false;
+
     private void showDialog(String text) {
-        handler.removeCallbacksAndMessages(null);
+//        handler.removeCallbacksAndMessages(null);
+//        tvDialog.setText(text);
+//        if (tvDialog.getVisibility() == View.GONE)
+//            tvDialog.setVisibility(View.VISIBLE);
+//        handler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                if (tvDialog.getVisibility() == View.VISIBLE)
+//                    tvDialog.setVisibility(View.GONE);
+//            }
+//        }, 2000);
+
         tvDialog.setText(text);
-        if (tvDialog.getVisibility() == View.GONE)
-            tvDialog.setVisibility(View.VISIBLE);
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (tvDialog.getVisibility() == View.VISIBLE)
-                    tvDialog.setVisibility(View.GONE);
-            }
-        }, 2000);
+        if (!isAnimaing) {
+            showAnimateDialog(isAnimaing);
+        }
+        handler.removeCallbacksAndMessages(null);
+        if (!isTouch) {
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    showAnimateDialog(isAnimaing);
+                }
+            }, 1000);
+        }
+    }
+
+    /**
+     * 动画显示隐藏对话框
+     *
+     * @param animate
+     */
+    private void showAnimateDialog(boolean animate) {
+        if (tvDialog == null) return;
+        isAnimaing = animate;
+        float start = 0f, end = 0f;
+        if (animate) {
+            start = 0.0f;
+            end = 1.0f;
+        } else {
+            start = 1.0f;
+            end = 0.0f;
+        }
+        ObjectAnimator animatorX = ObjectAnimator.ofFloat(tvDialog, "scaleX", start, end);
+        ObjectAnimator animatorY = ObjectAnimator.ofFloat(tvDialog, "scaleY", start, end);
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(animatorX, animatorY);
+        set.setDuration(1000);
+//        set.setInterpolator(new OvershootInterpolator());
+        set.start();
     }
 
     private float getTextHeight(String s) {
@@ -146,6 +194,7 @@ public class QuickView extends View {
         mListener = listener;
         tvDialog = textView;
         mList.addAll(list);
+        showAnimateDialog(false);
     }
 
     OnSelectListener mListener;
