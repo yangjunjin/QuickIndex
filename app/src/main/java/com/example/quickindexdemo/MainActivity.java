@@ -30,7 +30,8 @@ public class MainActivity extends AppCompatActivity{
         quickBar.setData(tvShow, friends, new QuickView.OnSelectListener() {
             @Override
             public void select(int position) {
-                listView.setSelection(position);
+//                listView.setSelection(position);
+                listView.smoothScrollToPositionFromTop(position, 0, 100);//滑动到position  距离top的偏移量  滑动所用的时间
             }
         });
     }
